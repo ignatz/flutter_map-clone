@@ -9,9 +9,27 @@ class Bounds<T extends num> {
   final CustomPoint<T> max;
 
   factory Bounds(CustomPoint<T> a, CustomPoint<T> b) {
-    final bounds1 = Bounds._(a, b);
-    final bounds2 = bounds1.extend(a);
-    return bounds2.extend(b);
+    T minx;
+    T maxx;
+    if (a.x > b.x) {
+      maxx = a.x;
+      minx = b.x;
+    } else {
+      maxx = b.x;
+      minx = a.x;
+    }
+
+    T miny;
+    T maxy;
+    if (a.y > b.y) {
+      maxy = a.y;
+      miny = b.y;
+    } else {
+      maxy = b.y;
+      miny = a.y;
+    }
+
+    return Bounds._(CustomPoint(minx, miny), CustomPoint(maxx, maxy));
   }
 
   const Bounds._(this.min, this.max);

@@ -24,20 +24,15 @@ abstract class Crs {
   /// Converts a point on the sphere surface (with a certain zoom) in a
   /// map point.
   CustomPoint<double> latLngToPoint(LatLng latlng, double zoom) {
-    try {
-      final projectedPoint = projection.project(latlng);
-      final scale = this.scale(zoom);
-      return transformation.transform(projectedPoint, scale.toDouble());
-    } catch (e) {
-      return const CustomPoint(0, 0);
-    }
+    final projectedPoint = projection.project(latlng);
+    final double scale = this.scale(zoom);
+    return transformation.transform(projectedPoint, scale);
   }
 
   /// Converts a map point to the sphere coordinate (at a certain zoom).
   LatLng? pointToLatLng(CustomPoint point, double zoom) {
     final scale = this.scale(zoom);
-    final untransformedPoint =
-        transformation.untransform(point, scale.toDouble());
+    final untransformedPoint = transformation.untransform(point, scale);
     try {
       return projection.unproject(untransformedPoint);
     } catch (e) {
@@ -61,8 +56,8 @@ abstract class Crs {
 
     final b = projection.bounds!;
     final s = scale(zoom);
-    final min = transformation.transform(b.min, s.toDouble());
-    final max = transformation.transform(b.max, s.toDouble());
+    final min = transformation.transform(b.min, s);
+    final max = transformation.transform(b.max, s);
     return Bounds(min, max);
   }
 
@@ -242,7 +237,7 @@ class Proj4Crs extends Crs {
       final scale = this.scale(zoom);
       final transformation = _getTransformationByZoom(zoom);
 
-      return transformation.transform(projectedPoint, scale.toDouble());
+      return transformation.transform(projectedPoint, scale);
     } catch (e) {
       return const CustomPoint(0, 0);
     }
@@ -254,8 +249,7 @@ class Proj4Crs extends Crs {
     final scale = this.scale(zoom);
     final transformation = _getTransformationByZoom(zoom);
 
-    final untransformedPoint =
-        transformation.untransform(point, scale.toDouble());
+    final untransformedPoint = transformation.untransform(point, scale);
     try {
       return projection.unproject(untransformedPoint);
     } catch (e) {
@@ -273,8 +267,8 @@ class Proj4Crs extends Crs {
 
     final transformation = _getTransformationByZoom(zoom);
 
-    final min = transformation.transform(b.min, s.toDouble());
-    final max = transformation.transform(b.max, s.toDouble());
+    final min = transformation.transform(b.min, s);
+    final max = transformation.transform(b.max, s);
     return Bounds(min, max);
   }
 
