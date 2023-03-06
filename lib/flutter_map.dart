@@ -144,6 +144,8 @@ abstract class MapController {
 
   CustomPoint<double>? latLngToScreenPoint(LatLng latLng);
 
+  Crs get crs;
+
   factory MapController() => MapControllerImpl();
 }
 

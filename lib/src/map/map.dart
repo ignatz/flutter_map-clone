@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map/src/geo/crs/crs.dart';
 import 'package:flutter_map/src/map/flutter_map_state.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -92,4 +93,7 @@ class MapControllerImpl implements MapController {
       counterRotation: counterRotation,
     );
   }
+
+  @override
+  Crs get crs => _state.options.crs;
 }
