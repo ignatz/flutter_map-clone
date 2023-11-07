@@ -69,16 +69,17 @@ class WMSTileLayerOptions {
   }
 
   String getUrl(TileCoordinates coords, int tileSize, bool retinaMode) {
-    final nwPoint = coords * tileSize;
-    final sePoint = nwPoint + Point<int>(tileSize, tileSize);
+    final (x, y) = (coords.x, coords.y);
+    final nwPoint = Point<int>(x * tileSize, y * tileSize);
+    final sePoint = Point<int>((x + 1) * tileSize, (y + 1) * tileSize);
     final nwCoords = crs.pointToLatLng(nwPoint, coords.z.toDouble());
     final seCoords = crs.pointToLatLng(sePoint, coords.z.toDouble());
+
     final nw = crs.projection.project(nwCoords);
     final se = crs.projection.project(seCoords);
-    final bounds = Bounds(nw, se);
     final bbox = (_versionNumber >= 1.3 && crs is Epsg4326)
-        ? [bounds.min.y, bounds.min.x, bounds.max.y, bounds.max.x]
-        : [bounds.min.x, bounds.min.y, bounds.max.x, bounds.max.y];
+        ? [se.y, nw.x, nw.y, se.x]
+        : [nw.x, se.y, se.x, nw.y];
 
     final buffer = StringBuffer(_encodedBaseUrl);
     buffer.write('&width=${retinaMode ? tileSize * 2 : tileSize}');

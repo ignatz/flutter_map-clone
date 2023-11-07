@@ -55,7 +55,7 @@ void main() {
       );
       expect(
         removalState.staleTiles,
-        containsTileImage(tileImages, const TileCoordinates(1, 1, 1)),
+        containsTileImage(tileImages, TileCoordinates(1, 1, 1)),
       );
     });
 
@@ -71,7 +71,7 @@ void main() {
       );
       expect(
         removalState.staleTiles,
-        doesNotContainTileImage(tileImages, const TileCoordinates(0, 0, 0)),
+        doesNotContainTileImage(tileImages, TileCoordinates(0, 0, 0)),
       );
     });
 
@@ -89,7 +89,7 @@ void main() {
       );
       expect(
         removalState.staleTiles,
-        doesNotContainTileImage(tileImages, const TileCoordinates(0, 0, 2)),
+        doesNotContainTileImage(tileImages, TileCoordinates(0, 0, 2)),
       );
     });
 
@@ -107,7 +107,7 @@ void main() {
       );
       expect(
         removalState.staleTiles,
-        containsTileImage(tileImages, const TileCoordinates(1, 1, 1)),
+        containsTileImage(tileImages, TileCoordinates(1, 1, 1)),
       );
       // If an iterator over the original collection is returned then when
       // looping over that iterator and removing from the original collection
@@ -133,7 +133,7 @@ void main() {
     );
     expect(
       tileImageView.errorTilesOutsideOfKeepMargin().map((e) => e.coordinates),
-      [const TileCoordinates(1, 1, 1)],
+      [TileCoordinates(1, 1, 1)],
     );
 
     // If an iterator over the original collection is returned then when
@@ -159,7 +159,7 @@ void main() {
     );
     expect(
       tileImageView.errorTilesNotVisible().map((e) => e.coordinates),
-      [const TileCoordinates(1, 1, 1), const TileCoordinates(2, 2, 1)],
+      [TileCoordinates(1, 1, 1), TileCoordinates(2, 2, 1)],
     );
 
     // If an iterator over the original collection is returned then when

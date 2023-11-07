@@ -12,7 +12,7 @@ abstract class TileRange {
 
   const TileRange(this.zoom);
 
-  Iterable<TileCoordinates> get coordinates;
+  Iterable<TileCoordinates> get coordinatesIter;
 }
 
 @immutable
@@ -20,7 +20,7 @@ class EmptyTileRange extends TileRange {
   const EmptyTileRange._(super.zoom);
 
   @override
-  Iterable<TileCoordinates> get coordinates =>
+  Iterable<TileCoordinates> get coordinatesIter =>
       const Iterable<TileCoordinates>.empty();
 }
 
@@ -99,8 +99,11 @@ class DiscreteTileRange extends TileRange {
     );
   }
 
-  bool contains(Point<int> point) {
-    return _bounds.contains(point);
+  bool contains(TileCoordinates point) {
+    return (point.x >= _bounds.min.x) &&
+        (point.x <= _bounds.max.x) &&
+        (point.y >= _bounds.min.y) &&
+        (point.y <= _bounds.max.y);
   }
 
   Point<int> get min => _bounds.min;
@@ -110,7 +113,7 @@ class DiscreteTileRange extends TileRange {
   Point<double> get center => _bounds.center;
 
   @override
-  Iterable<TileCoordinates> get coordinates sync* {
+  Iterable<TileCoordinates> get coordinatesIter sync* {
     for (var j = _bounds.min.y; j <= _bounds.max.y; j++) {
       for (var i = _bounds.min.x; i <= _bounds.max.x; i++) {
         yield TileCoordinates(i, j, zoom);
@@ -120,4 +123,11 @@ class DiscreteTileRange extends TileRange {
 
   @override
   String toString() => 'DiscreteTileRange($min, $max)';
+
+  @override
+  bool operator ==(Object other) =>
+      other is DiscreteTileRange && other._bounds == _bounds;
+
+  @override
+  int get hashCode => _bounds.hashCode;
 }

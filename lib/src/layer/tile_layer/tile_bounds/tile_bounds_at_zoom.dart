@@ -2,7 +2,6 @@ import 'package:flutter_map/src/layer/tile_layer/tile_coordinates.dart';
 import 'package:flutter_map/src/layer/tile_layer/tile_range.dart';
 import 'package:meta/meta.dart';
 
-@immutable
 abstract class TileBoundsAtZoom {
   const TileBoundsAtZoom();
 
@@ -20,7 +19,7 @@ class InfiniteTileBoundsAtZoom extends TileBoundsAtZoom {
 
   @override
   Iterable<TileCoordinates> validCoordinatesIn(DiscreteTileRange tileRange) =>
-      tileRange.coordinates;
+      tileRange.coordinatesIter;
 
   @override
   String toString() => 'InfiniteTileBoundsAtZoom()';
@@ -41,21 +40,25 @@ class DiscreteTileBoundsAtZoom extends TileBoundsAtZoom {
       this.tileRange.zoom == tileRange.zoom,
       "The zoom of the provided TileRange can't differ from the zoom level of the current tileRange",
     );
-    return this.tileRange.intersect(tileRange).coordinates;
+    return this.tileRange.intersect(tileRange).coordinatesIter;
   }
 
   @override
   String toString() => 'DiscreteTileBoundsAtZoom($tileRange)';
 }
 
-@immutable
 class WrappedTileBoundsAtZoom extends TileBoundsAtZoom {
   final DiscreteTileRange tileRange;
   final bool wrappedAxisIsAlwaysInBounds;
   final (int, int)? wrapX;
   final (int, int)? wrapY;
 
-  const WrappedTileBoundsAtZoom({
+  ({
+    DiscreteTileRange range,
+    List<TileCoordinates> coordinates,
+  })? _cache;
+
+  WrappedTileBoundsAtZoom({
     required this.tileRange,
     // If true the wrapped axis will not be checked when calling
     // validCoordinatesIn. This makes sense if the [tileRange] is from the crs
@@ -81,11 +84,25 @@ class WrappedTileBoundsAtZoom extends TileBoundsAtZoom {
 
   @override
   Iterable<TileCoordinates> validCoordinatesIn(DiscreteTileRange tileRange) {
+    final cache = _cache;
+    if (cache != null && cache.range == tileRange) {
+      return cache.coordinates;
+    }
+
+    final coordinates = _validCoordinatesIn(tileRange).toList();
+    _cache = (
+      range: tileRange,
+      coordinates: coordinates,
+    );
+    return coordinates;
+  }
+
+  Iterable<TileCoordinates> _validCoordinatesIn(DiscreteTileRange tileRange) {
     if (wrapX != null && wrapY != null) {
-      if (wrappedAxisIsAlwaysInBounds) return tileRange.coordinates;
+      if (wrappedAxisIsAlwaysInBounds) return tileRange.coordinatesIter;
 
       // We need to wrap and check each coordinate.
-      return tileRange.coordinates.where(_wrappedBothContains);
+      return tileRange.coordinatesIter.where(_wrappedBothContains);
     } else if (wrapX != null) {
       // wrapY is null otherwise this would be a discrete bounds
       // We can intersect the y coordinate since its not wrapped
@@ -93,8 +110,10 @@ class WrappedTileBoundsAtZoom extends TileBoundsAtZoom {
         this.tileRange.min.y,
         this.tileRange.max.y,
       );
-      if (wrappedAxisIsAlwaysInBounds) return intersectedRange.coordinates;
-      return intersectedRange.coordinates.where(_wrappedXInRange);
+      if (wrappedAxisIsAlwaysInBounds) {
+        return intersectedRange.coordinatesIter;
+      }
+      return intersectedRange.coordinatesIter.where(_wrappedXInRange);
     } else if (wrapY != null) {
       // wrapX is null otherwise this would be a discrete bounds
       // We can intersect the x coordinate since its not wrapped
@@ -102,8 +121,8 @@ class WrappedTileBoundsAtZoom extends TileBoundsAtZoom {
         this.tileRange.min.x,
         this.tileRange.max.x,
       );
-      if (wrappedAxisIsAlwaysInBounds) return intersectedRange.coordinates;
-      return intersectedRange.coordinates.where(_wrappedYInRange);
+      if (wrappedAxisIsAlwaysInBounds) return intersectedRange.coordinatesIter;
+      return intersectedRange.coordinatesIter.where(_wrappedYInRange);
     } else {
       throw Exception('Wrapped bounds must wrap on at least one axis');
     }

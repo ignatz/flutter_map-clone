@@ -24,7 +24,6 @@ import 'package:flutter_map/src/layer/tile_layer/tile_update_event.dart';
 import 'package:flutter_map/src/layer/tile_layer/tile_update_transformer.dart';
 import 'package:flutter_map/src/map/camera/camera.dart';
 import 'package:flutter_map/src/map/controller/map_controller.dart';
-import 'package:flutter_map/src/misc/bounds.dart';
 import 'package:http/retry.dart';
 import 'package:logger/logger.dart';
 
@@ -522,7 +521,7 @@ class _TileLayerState extends State<TileLayer> with TickerProviderStateMixin {
     // the Tile and become visible. We don't need to prune here as any new tiles
     // will be pruned when the map event triggers tile loading.
     _tileImageManager.createMissingTiles(
-      visibleTileRange,
+      visibleTileRange.expand(widget.panBuffer),
       tileBoundsAtZoom,
       createTile: (coordinates) => _createTileImage(
         coordinates: coordinates,

@@ -23,7 +23,7 @@ void main() {
         expect(
           emptyTileRange,
           isA<EmptyTileRange>()
-              .having((e) => e.coordinates, 'coordinates', isEmpty),
+              .having((e) => e.coordinatesIter, 'coordinates', isEmpty),
         );
       });
     });
@@ -40,8 +40,8 @@ void main() {
             ),
           );
 
-          expect(
-              tileRange.coordinates.toList(), [const TileCoordinates(2, 2, 0)]);
+          expect(tileRange.coordinatesIter,
+              containsAllInOrder([TileCoordinates(2, 2, 0)]));
         });
 
         test('lower tile edge', () {
@@ -54,8 +54,8 @@ void main() {
             ),
           );
 
-          expect(
-              tileRange.coordinates.toList(), [const TileCoordinates(0, 0, 0)]);
+          expect(tileRange.coordinatesIter,
+              containsAllInOrder([TileCoordinates(0, 0, 0)]));
         });
 
         test('upper tile edge', () {
@@ -68,8 +68,8 @@ void main() {
             ),
           );
 
-          expect(
-              tileRange.coordinates.toList(), [const TileCoordinates(0, 0, 0)]);
+          expect(tileRange.coordinatesIter,
+              containsAllInOrder([TileCoordinates(0, 0, 0)]));
         });
 
         test('both tile edges', () {
@@ -82,17 +82,19 @@ void main() {
             ),
           );
 
-          expect(tileRange.coordinates.toList(), [
-            const TileCoordinates(1, 1, 0),
-            const TileCoordinates(2, 1, 0),
-            const TileCoordinates(3, 1, 0),
-            const TileCoordinates(1, 2, 0),
-            const TileCoordinates(2, 2, 0),
-            const TileCoordinates(3, 2, 0),
-            const TileCoordinates(1, 3, 0),
-            const TileCoordinates(2, 3, 0),
-            const TileCoordinates(3, 3, 0),
-          ]);
+          expect(
+              tileRange.coordinatesIter,
+              containsAllInOrder([
+                TileCoordinates(1, 1, 0),
+                TileCoordinates(2, 1, 0),
+                TileCoordinates(3, 1, 0),
+                TileCoordinates(1, 2, 0),
+                TileCoordinates(2, 2, 0),
+                TileCoordinates(3, 2, 0),
+                TileCoordinates(1, 3, 0),
+                TileCoordinates(2, 3, 0),
+                TileCoordinates(3, 3, 0),
+              ]));
         });
       });
 
@@ -106,21 +108,23 @@ void main() {
           ),
         );
 
-        expect(
-            tileRange.coordinates.toList(), [const TileCoordinates(2, 2, 0)]);
+        expect(tileRange.coordinatesIter,
+            containsAllInOrder([TileCoordinates(2, 2, 0)]));
         final expandedTileRange = tileRange.expand(1);
 
-        expect(expandedTileRange.coordinates.toList(), [
-          const TileCoordinates(1, 1, 0),
-          const TileCoordinates(2, 1, 0),
-          const TileCoordinates(3, 1, 0),
-          const TileCoordinates(1, 2, 0),
-          const TileCoordinates(2, 2, 0),
-          const TileCoordinates(3, 2, 0),
-          const TileCoordinates(1, 3, 0),
-          const TileCoordinates(2, 3, 0),
-          const TileCoordinates(3, 3, 0),
-        ]);
+        expect(
+            expandedTileRange.coordinatesIter,
+            containsAllInOrder([
+              TileCoordinates(1, 1, 0),
+              TileCoordinates(2, 1, 0),
+              TileCoordinates(3, 1, 0),
+              TileCoordinates(1, 2, 0),
+              TileCoordinates(2, 2, 0),
+              TileCoordinates(3, 2, 0),
+              TileCoordinates(1, 3, 0),
+              TileCoordinates(2, 3, 0),
+              TileCoordinates(3, 3, 0),
+            ]));
       });
 
       test('no intersection', () {
@@ -168,13 +172,11 @@ void main() {
           ),
         );
 
-        final intersectionA =
-            tileRange1.intersect(tileRange2).coordinates.toList();
-        final intersectionB =
-            tileRange1.intersect(tileRange2).coordinates.toList();
+        final intersectionA = tileRange1.intersect(tileRange2).coordinatesIter;
+        expect(intersectionA, containsAllInOrder([TileCoordinates(3, 3, 0)]));
 
-        expect(intersectionA, [const TileCoordinates(3, 3, 0)]);
-        expect(intersectionB, [const TileCoordinates(3, 3, 0)]);
+        final intersectionB = tileRange1.intersect(tileRange2).coordinatesIter;
+        expect(intersectionB, containsAllInOrder([TileCoordinates(3, 3, 0)]));
       });
 
       test('range within other range', () {
@@ -197,12 +199,12 @@ void main() {
         );
 
         final intersectionA =
-            tileRange1.intersect(tileRange2).coordinates.toList();
+            tileRange1.intersect(tileRange2).coordinatesIter.toList();
         final intersectionB =
-            tileRange1.intersect(tileRange2).coordinates.toList();
+            tileRange1.intersect(tileRange2).coordinatesIter.toList();
 
-        expect(intersectionA, tileRange1.coordinates.toList());
-        expect(intersectionB, tileRange1.coordinates.toList());
+        expect(intersectionA, tileRange1.coordinatesIter.toList());
+        expect(intersectionB, tileRange1.coordinatesIter.toList());
       });
     });
 
@@ -271,15 +273,15 @@ void main() {
         ),
       );
 
-      expect(tileRange.contains(const Point(2, 2)), isFalse);
-      expect(tileRange.contains(const Point(3, 2)), isFalse);
-      expect(tileRange.contains(const Point(4, 2)), isFalse);
-      expect(tileRange.contains(const Point(2, 3)), isFalse);
-      expect(tileRange.contains(const Point(3, 3)), isTrue);
-      expect(tileRange.contains(const Point(4, 3)), isFalse);
-      expect(tileRange.contains(const Point(2, 4)), isFalse);
-      expect(tileRange.contains(const Point(3, 4)), isFalse);
-      expect(tileRange.contains(const Point(4, 4)), isFalse);
+      expect(tileRange.contains(TileCoordinates(2, 2, 1)), isFalse);
+      expect(tileRange.contains(TileCoordinates(3, 2, 1)), isFalse);
+      expect(tileRange.contains(TileCoordinates(4, 2, 1)), isFalse);
+      expect(tileRange.contains(TileCoordinates(2, 3, 1)), isFalse);
+      expect(tileRange.contains(TileCoordinates(3, 3, 1)), isTrue);
+      expect(tileRange.contains(TileCoordinates(4, 3, 1)), isFalse);
+      expect(tileRange.contains(TileCoordinates(2, 4, 1)), isFalse);
+      expect(tileRange.contains(TileCoordinates(3, 4, 1)), isFalse);
+      expect(tileRange.contains(TileCoordinates(4, 4, 1)), isFalse);
     });
   });
 }

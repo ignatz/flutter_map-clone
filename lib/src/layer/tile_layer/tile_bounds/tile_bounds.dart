@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter_map/src/geo/crs.dart';
 import 'package:flutter_map/src/geo/latlng_bounds.dart';
 import 'package:flutter_map/src/layer/tile_layer/tile_bounds/tile_bounds_at_zoom.dart';
@@ -58,7 +60,7 @@ class InfiniteTileBounds extends TileBounds {
 
 @immutable
 class DiscreteTileBounds extends TileBounds {
-  final Map<int, TileBoundsAtZoom> _tileBoundsAtZoomCache = {};
+  final _tileBoundsAtZoomCache = HashMap<int, TileBoundsAtZoom>();
 
   DiscreteTileBounds._(
     super.crs,
@@ -97,7 +99,7 @@ class DiscreteTileBounds extends TileBounds {
 
 @immutable
 class WrappedTileBounds extends TileBounds {
-  final Map<int, WrappedTileBoundsAtZoom> _tileBoundsAtZoomCache = {};
+  final _tileBoundsAtZoomCache = HashMap<int, WrappedTileBoundsAtZoom>();
 
   WrappedTileBounds._(
     super.crs,

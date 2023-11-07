@@ -1,19 +1,17 @@
 import 'dart:math';
 
-import 'package:meta/meta.dart';
+class TileCoordinates {
+  int x;
+  int y;
+  int z;
 
-@immutable
-class TileCoordinates extends Point<int> {
-  final int z;
-
-  const TileCoordinates(super.x, super.y, this.z);
+  TileCoordinates(this.x, this.y, this.z);
 
   @override
   String toString() => 'TileCoordinate($x, $y, $z)';
 
   // Overridden because Point's distanceTo does not allow comparing with a point
   // of a different type.
-  @override
   double distanceTo(Point<num> other) {
     final dx = x - other.x;
     final dy = y - other.y;

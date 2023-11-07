@@ -105,4 +105,12 @@ class Bounds<T extends num> {
 
   @override
   String toString() => 'Bounds($min, $max)';
+
+  @override
+  bool operator ==(Object other) {
+    return other is Bounds<T> && min == other.min && max == other.max;
+  }
+
+  @override
+  int get hashCode => Object.hash(min, max);
 }

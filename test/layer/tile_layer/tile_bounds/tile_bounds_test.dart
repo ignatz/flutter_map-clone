@@ -184,7 +184,7 @@ void main() {
         final tileBoundsAtZoom =
             tileBounds.atZoom(zoom) as WrappedTileBoundsAtZoom;
 
-        final coords = tileBoundsAtZoom.tileRange.coordinates;
+        final coords = tileBoundsAtZoom.tileRange.coordinatesIter;
         final firstCoord = coords.first;
         final lastCoord = coords.last;
 

@@ -9,7 +9,7 @@ final class TileImageView {
   final DiscreteTileRange _visibleRange;
   final DiscreteTileRange _keepRange;
 
-  const TileImageView({
+  TileImageView({
     required Map<TileCoordinates, TileImage> tileImages,
     required DiscreteTileRange visibleRange,
     required DiscreteTileRange keepRange,
@@ -72,6 +72,7 @@ final class TileImageView {
   // Recurses through the ancestors of the Tile at the given coordinates adding
   // them to [retain] if they are ready to display or loaded. Returns true if
   // any of the ancestor tiles were ready to display.
+  final _ancestorCoord = TileCoordinates(0, 0, 0);
   bool _retainAncestor(
     Set<TileImage> retain,
     int x,
@@ -82,9 +83,11 @@ final class TileImageView {
     final x2 = (x / 2).floor();
     final y2 = (y / 2).floor();
     final z2 = z - 1;
-    final coords2 = TileCoordinates(x2, y2, z2);
 
-    final tile = _tileImages[coords2];
+    final tile = _tileImages[_ancestorCoord
+      ..x = x2
+      ..y = y2
+      ..z = z2];
     if (tile != null) {
       if (tile.readyToDisplay) {
         retain.add(tile);
@@ -94,7 +97,7 @@ final class TileImageView {
       }
     }
 
-    if (z2 > minZoom) {
+    if (_ancestorCoord.z > minZoom) {
       return _retainAncestor(retain, x2, y2, z2, minZoom);
     }
 
@@ -103,6 +106,7 @@ final class TileImageView {
 
   // Recurses through the descendants of the Tile at the given coordinates
   // adding them to [retain] if they are ready to display or loaded.
+  final _childCoord = TileCoordinates(0, 0, 0);
   void _retainChildren(
     Set<TileImage> retain,
     int x,
@@ -111,9 +115,10 @@ final class TileImageView {
     int maxZoom,
   ) {
     for (final (i, j) in const [(0, 0), (0, 1), (1, 0), (1, 1)]) {
-      final coords = TileCoordinates(2 * x + i, 2 * y + j, z + 1);
-
-      final tile = _tileImages[coords];
+      final tile = _tileImages[_childCoord
+        ..x = 2 * x + i
+        ..y = 2 * y + j
+        ..z = z + 1];
       if (tile != null) {
         if (tile.readyToDisplay || tile.loadFinishedAt != null) {
           retain.add(tile);

@@ -8,7 +8,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('TileBoundsAtZoom', () {
-    const hugeCoordinate = TileCoordinates(999999999, 999999999, 0);
+    final hugeCoordinate = TileCoordinates(999999999, 999999999, 0);
     final hugePoint =
         Point<double>(hugeCoordinate.x.toDouble(), hugeCoordinate.y.toDouble());
     final tileRangeWithHugeCoordinate = DiscreteTileRange.fromPixelBounds(
@@ -61,7 +61,7 @@ void main() {
       // Does not filter out valid coordinates
       final resultingCoordinates =
           tileBoundsAtZoom.validCoordinatesIn(tileRange);
-      expect(resultingCoordinates, tileRange.coordinates);
+      expect(resultingCoordinates, tileRange.coordinatesIter);
     });
 
     test('WrappedTileBoundsAtZoom, wrappedTilesAlwaysValid = false', () {
@@ -75,18 +75,18 @@ void main() {
 
       // Only wraps x, x is larger than range
       expect(
-        tileBoundsAtZoom.wrap(const TileCoordinates(13, 13, 0)),
-        const TileCoordinates(0, 13, 0),
+        tileBoundsAtZoom.wrap(TileCoordinates(13, 13, 0)),
+        TileCoordinates(0, 13, 0),
       );
       // Only wraps x, x is smaller than range
       expect(
-        tileBoundsAtZoom.wrap(const TileCoordinates(-1, -1, 0)),
-        const TileCoordinates(12, -1, 0),
+        tileBoundsAtZoom.wrap(TileCoordinates(-1, -1, 0)),
+        TileCoordinates(12, -1, 0),
       );
       // No wrap, x is within range
       expect(
-        tileBoundsAtZoom.wrap(const TileCoordinates(12, 12, 0)),
-        const TileCoordinates(12, 12, 0),
+        tileBoundsAtZoom.wrap(TileCoordinates(12, 12, 0)),
+        TileCoordinates(12, 12, 0),
       );
 
       // Filters out invalid coordinates
@@ -106,14 +106,14 @@ void main() {
       // Keeps coordinates which are in the tile range.
       expect(
         tileBoundsAtZoom.validCoordinatesIn(discreteTileRange(0, 0, 0, 12, 12)),
-        discreteTileRange(0, 2, 2, 10, 10).coordinates,
+        discreteTileRange(0, 2, 2, 10, 10).coordinatesIter,
       );
 
       // Keeps coordinates which are in the tile range when wrapped.
       expect(
         tileBoundsAtZoom
             .validCoordinatesIn(discreteTileRange(0, 13, 0, 25, 12)),
-        discreteTileRange(0, 15, 2, 23, 10).coordinates,
+        discreteTileRange(0, 15, 2, 23, 10).coordinatesIter,
       );
     });
 
@@ -128,18 +128,18 @@ void main() {
 
       // Only wraps x, x is larger than range
       expect(
-        tileBoundsAtZoom.wrap(const TileCoordinates(13, 13, 0)),
-        const TileCoordinates(0, 13, 0),
+        tileBoundsAtZoom.wrap(TileCoordinates(13, 13, 0)),
+        TileCoordinates(0, 13, 0),
       );
       // Only wraps x, x is smaller than range
       expect(
-        tileBoundsAtZoom.wrap(const TileCoordinates(-1, -1, 0)),
-        const TileCoordinates(12, -1, 0),
+        tileBoundsAtZoom.wrap(TileCoordinates(-1, -1, 0)),
+        TileCoordinates(12, -1, 0),
       );
       // No wrap, x is within range
       expect(
-        tileBoundsAtZoom.wrap(const TileCoordinates(12, 12, 0)),
-        const TileCoordinates(12, 12, 0),
+        tileBoundsAtZoom.wrap(TileCoordinates(12, 12, 0)),
+        TileCoordinates(12, 12, 0),
       );
 
       // Filters out invalid coordinates
@@ -159,14 +159,14 @@ void main() {
       // Keeps all wrapped coordinates, only non-wrapped coordinates in range.
       expect(
         tileBoundsAtZoom.validCoordinatesIn(discreteTileRange(0, 0, 0, 12, 12)),
-        discreteTileRange(0, 0, 2, 12, 10).coordinates,
+        discreteTileRange(0, 0, 2, 12, 10).coordinatesIter,
       );
 
       // Keeps all wrapped coordinates, only non-wrapped coordinates in range.
       expect(
         tileBoundsAtZoom
             .validCoordinatesIn(discreteTileRange(0, 13, 0, 25, 12)),
-        discreteTileRange(0, 13, 2, 25, 10).coordinates,
+        discreteTileRange(0, 13, 2, 25, 10).coordinatesIter,
       );
     });
   });
