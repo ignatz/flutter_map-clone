@@ -1,12 +1,14 @@
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:dart_earcut/dart_earcut.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_map/src/geo/latlng_bounds.dart';
 import 'package:flutter_map/src/layer/general/mobile_layer_transformer.dart';
 import 'package:flutter_map/src/layer/polygon_layer/label.dart';
 import 'package:flutter_map/src/map/camera/camera.dart';
-import 'package:flutter_map/src/misc/offsets.dart';
 import 'package:flutter_map/src/misc/point_extensions.dart';
+import 'package:flutter_map/src/misc/offsets.dart';
 import 'package:latlong2/latlong.dart' hide Path; // conflict with Path from UI
 
 enum PolygonLabelPlacement {
@@ -66,6 +68,17 @@ class Polygon {
     }
     return null;
   }
+
+  List<int>? _triangles;
+  List<int> get triangles => _triangles ??= () {
+        final ps = List<double>.generate(points.length * 2, (index) {
+          if (index.isEven) {
+            return points[index ~/ 2].longitude;
+          }
+          return points[index ~/ 2].latitude;
+        });
+        return Earcut.triangulateRaw(ps);
+      }();
 
   Polygon({
     required this.points,
@@ -144,6 +157,9 @@ class PolygonLayer extends StatelessWidget {
   }
 }
 
+const bool renderVertexes = true;
+const bool renderPoints = false;
+
 class PolygonPainter extends CustomPainter {
   final List<Polygon> polygons;
   final MapCamera map;
@@ -174,6 +190,10 @@ class PolygonPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     var filledPath = ui.Path();
     var borderPath = ui.Path();
+
+    final trianglePoints = <Offset>[];
+    final outlinePoints = <List<Offset>>[];
+
     Polygon? lastPolygon;
     int? lastHash;
 
@@ -190,17 +210,74 @@ class PolygonPainter extends CustomPainter {
           ..style = PaintingStyle.fill
           ..color = polygon.color;
 
-        canvas.drawPath(filledPath, paint);
+        if (renderVertexes) {
+          final points = Float32List(trianglePoints.length * 2);
+          for (int i = 0; i < trianglePoints.length; ++i) {
+            points[i * 2] = trianglePoints[i].dx;
+            points[i * 2 + 1] = trianglePoints[i].dy;
+          }
+          final vertices = ui.Vertices.raw(ui.VertexMode.triangles, points);
+          canvas.drawVertices(vertices, ui.BlendMode.src, paint);
+        } else {
+          canvas.drawPath(filledPath, paint);
+        }
       }
 
       // Draw polygon outline.
       if (polygon.borderStrokeWidth > 0) {
         final borderPaint = _getBorderPaint(polygon);
-        canvas.drawPath(borderPath, borderPaint);
+
+        if (renderPoints) {
+          int len = 0;
+          for (final outline in outlinePoints) {
+            len += outline.length;
+          }
+
+          final segments = Float32List(len * 4);
+
+          int index = 0;
+          for (final outline in outlinePoints) {
+            for (int i = 0; i < outline.length; ++i) {
+              final p1 = outline[i];
+              segments[index] = p1.dx;
+              segments[index + 1] = p1.dy;
+
+              final p2 = outline[(i + 1) % outline.length];
+              segments[index + 2] = p2.dx;
+              segments[index + 3] = p2.dy;
+
+              index += 4;
+            }
+          }
+          canvas.drawRawPoints(ui.PointMode.lines, segments, borderPaint);
+
+          // for (final outline in outlinePoints) {
+          //   final segments = Float32List(outline.length * 2);
+          //
+          //   for (int i = 0; i < outline.length * 2; i += 2) {
+          //     final p1 = outline[i~/2];
+          //     segments[i] = p1.dx;
+          //     segments[i + 1] = p1.dy;
+          //   }
+          //   canvas.drawRawPoints(ui.PointMode.polygon, segments, borderPaint);
+          // }
+        } else {
+          canvas.drawPath(borderPath, borderPaint);
+        }
       }
 
-      filledPath = ui.Path();
-      borderPath = ui.Path();
+      if (renderVertexes) {
+        trianglePoints.clear();
+      } else {
+        filledPath = ui.Path();
+      }
+
+      if (renderPoints) {
+        outlinePoints.clear();
+      } else {
+        borderPath = ui.Path();
+      }
+
       lastPolygon = null;
       lastHash = null;
     }
@@ -226,34 +303,45 @@ class PolygonPainter extends CustomPainter {
 
       // First add fills and borders to path.
       if (polygon.isFilled) {
-        filledPath.addPolygon(offsets, true);
+        if (renderVertexes) {
+          final len = polygon.triangles.length;
+          for (int i = 0; i < len; ++i) {
+            trianglePoints.add(offsets[polygon.triangles[i]]);
+          }
+        } else {
+          filledPath.addPolygon(offsets, true);
+        }
       }
       if (polygon.borderStrokeWidth > 0.0) {
-        _addBorderToPath(borderPath, polygon, offsets);
+        if (renderPoints) {
+          outlinePoints.add(offsets);
+        } else {
+          _addBorderToPath(borderPath, polygon, offsets);
+        }
       }
 
       // Afterwards deal with more complicated holes.
-      final holePointsList = polygon.holePointsList;
-      if (holePointsList != null && holePointsList.isNotEmpty) {
-        // Ideally we'd use `Path.combine(PathOperation.difference, ...)`
-        // instead of evenOdd fill-type, however it creates visual artifacts
-        // using the web renderer.
-        filledPath.fillType = PathFillType.evenOdd;
-
-        final holeOffsetsList = List<List<Offset>>.generate(
-          holePointsList.length,
-          (i) => getOffsets(map, origin, holePointsList[i]),
-          growable: false,
-        );
-
-        for (final holeOffsets in holeOffsetsList) {
-          filledPath.addPolygon(holeOffsets, true);
-        }
-
-        if (!polygon.disableHolesBorder && polygon.borderStrokeWidth > 0.0) {
-          _addHoleBordersToPath(borderPath, polygon, holeOffsetsList);
-        }
-      }
+      // final holePointsList = polygon.holePointsList;
+      // if (holePointsList != null && holePointsList.isNotEmpty) {
+      //   // Ideally we'd use `Path.combine(PathOperation.difference, ...)`
+      //   // instead of evenOdd fill-type, however it creates visual artifacts
+      //   // using the web renderer.
+      //   filledPath.fillType = PathFillType.evenOdd;
+      //
+      //   final holeOffsetsList = List<List<Offset>>.generate(
+      //     holePointsList.length,
+      //     (i) => getOffsets(map, origin, holePointsList[i]),
+      //     growable: false,
+      //   );
+      //
+      //   for (final holeOffsets in holeOffsetsList) {
+      //     filledPath.addPolygon(holeOffsets, true);
+      //   }
+      //
+      //   if (!polygon.disableHolesBorder && polygon.borderStrokeWidth > 0.0) {
+      //     _addHoleBordersToPath(borderPath, polygon, holeOffsetsList);
+      //   }
+      // }
 
       if (!drawLabelsLast && polygonLabels && polygon.textPainter != null) {
         // Labels are expensive because:
@@ -267,7 +355,7 @@ class PolygonPainter extends CustomPainter {
         // there isn't enough space.
         final painter = buildLabelTextPainter(
           mapSize: map.size,
-          placementPoint: map.getOffsetFromOrigin(polygon.labelPosition),
+          placementPoint: getOffset(map, origin, polygon.labelPosition),
           bounds: getBounds(origin, polygon),
           textPainter: polygon.textPainter!,
           rotationRad: map.rotationRad,
@@ -295,8 +383,7 @@ class PolygonPainter extends CustomPainter {
         if (textPainter != null) {
           final painter = buildLabelTextPainter(
             mapSize: map.size,
-            placementPoint:
-                map.project(polygon.labelPosition).toOffset() - origin,
+            placementPoint: getOffset(map, origin, polygon.labelPosition),
             bounds: getBounds(origin, polygon),
             textPainter: textPainter,
             rotationRad: map.rotationRad,
